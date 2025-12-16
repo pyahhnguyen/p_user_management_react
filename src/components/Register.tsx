@@ -1,0 +1,240 @@
+import { useState } from 'react';
+
+interface RegisterProps {
+  onSwitchToLogin: () => void;
+}
+
+function Register({ onSwitchToLogin }: RegisterProps) {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    };
+    let isValid = true;
+
+    // Full name validation
+    if (!formData.fullName) {
+      newErrors.fullName = 'Full name is required';
+      isValid = false;
+    } else if (formData.fullName.length < 3) {
+      newErrors.fullName = 'Full name must be at least 3 characters';
+      isValid = false;
+    }
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+      isValid = false;
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+      isValid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+      isValid = false;
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+      isValid = false;
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+      isValid = false;
+    }
+
+    // Terms agreement
+    if (!agreedToTerms) {
+      alert('Please agree to the terms and conditions');
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      console.log('Register data:', formData);
+      alert(`Registration successful!\nName: ${formData.fullName}\nEmail: ${formData.email}`);
+      // Reset form
+      setFormData({ fullName: '', email: '', password: '', confirmPassword: '' });
+      setAgreedToTerms(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-8 w-full max-w-md">
+        <div className="mb-8">
+          <h1 className="text-gray-900 text-2xl font-semibold mb-2">Create Account</h1>
+          <p className="text-gray-500 text-sm">Sign up to get started</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="fullName" className="text-gray-700 text-sm font-medium">
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Enter your full name"
+              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 ${
+                errors.fullName 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 focus:border-gray-900'
+              }`}
+            />
+            {errors.fullName && (
+              <span className="text-red-500 text-xs">{errors.fullName}</span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-gray-700 text-sm font-medium">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 ${
+                errors.email 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 focus:border-gray-900'
+              }`}
+            />
+            {errors.email && (
+              <span className="text-red-500 text-xs">{errors.email}</span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-gray-700 text-sm font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 ${
+                errors.password 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 focus:border-gray-900'
+              }`}
+            />
+            {errors.password && (
+              <span className="text-red-500 text-xs">{errors.password}</span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="confirmPassword" className="text-gray-700 text-sm font-medium">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 ${
+                errors.confirmPassword 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 focus:border-gray-900'
+              }`}
+            />
+            {errors.confirmPassword && (
+              <span className="text-red-500 text-xs">{errors.confirmPassword}</span>
+            )}
+          </div>
+
+          <div className="flex items-start gap-2 text-sm mt-2">
+            <input 
+              type="checkbox" 
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="w-4 h-4 mt-0.5 cursor-pointer accent-gray-900"
+            />
+            <label className="cursor-pointer text-gray-600 leading-tight">
+              I agree to the{' '}
+              <a href="#" className="text-gray-900 font-medium no-underline hover:underline">
+                Terms & Conditions
+              </a>
+            </label>
+          </div>
+
+          <button 
+            type="submit" 
+            className="bg-gray-900 text-white border-none rounded-md py-2.5 px-4 text-sm font-medium cursor-pointer hover:bg-gray-800 mt-2"
+          >
+            Register
+          </button>
+        </form>
+
+        <div className="text-center mt-6 pt-6 border-t border-gray-200">
+          <p className="text-gray-600 text-sm m-0">
+            Already have an account?{' '}
+            <button 
+              onClick={onSwitchToLogin} 
+              className="bg-transparent border-none text-gray-900 font-medium cursor-pointer p-0 text-sm hover:underline"
+            >
+              Login here
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Register;
