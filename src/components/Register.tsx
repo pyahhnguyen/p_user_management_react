@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import type { Account } from '../types/User';
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
+  onRegisterSuccess: () => void;
 }
 
-function Register({ onSwitchToLogin }: RegisterProps) {
+function Register({ onSwitchToLogin, onRegisterSuccess }: RegisterProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -16,8 +18,11 @@ function Register({ onSwitchToLogin }: RegisterProps) {
     email: '',
     password: '',
     confirmPassword: '',
+    terms: '',
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,12 +39,22 @@ function Register({ onSwitchToLogin }: RegisterProps) {
     }
   };
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setAgreedToTerms(isChecked);
+    
+    if (isChecked && errors.terms) {
+      setErrors(prev => ({ ...prev, terms: '' }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {
       fullName: '',
       email: '',
       password: '',
       confirmPassword: '',
+      terms: '',
     };
     let isValid = true;
 
@@ -81,7 +96,7 @@ function Register({ onSwitchToLogin }: RegisterProps) {
 
     // Terms agreement
     if (!agreedToTerms) {
-      alert('Please agree to the terms and conditions');
+      newErrors.terms = 'Please agree to the terms and conditions';
       isValid = false;
     }
 
@@ -89,15 +104,42 @@ function Register({ onSwitchToLogin }: RegisterProps) {
     return isValid;
   };
 
+
+  // handle submit register
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log('Register data:', formData);
-      alert(`Registration successful!\nName: ${formData.fullName}\nEmail: ${formData.email}`);
-      // Reset form
+      // get existing accounts from localStorage
+      const existingAccounts: Account[] = JSON.parse(localStorage.getItem('accounts') || '[]');
+      
+      // Check if email already exists
+      const emailExists = existingAccounts.some(
+        (acc: Account) => acc.email.toLowerCase() === formData.email.toLowerCase()
+      );
+      
+      if (emailExists) {
+        setErrors(prev => ({
+          ...prev,
+          email: 'This email is already registered'
+        }));
+        return;
+      }
+      
+      // create new account and save to localStorage
+      const newAccount = { 
+        email: formData.email, 
+        password: formData.password, 
+        fullName: formData.fullName 
+      };
+      
+      localStorage.setItem('accounts', JSON.stringify([...existingAccounts, newAccount]));
+      console.log('Account created:', newAccount);
+      
+      // Reset form & redirect to login
       setFormData({ fullName: '', email: '', password: '', confirmPassword: '' });
       setAgreedToTerms(false);
+      onRegisterSuccess(); 
     }
   };
 
@@ -121,7 +163,7 @@ function Register({ onSwitchToLogin }: RegisterProps) {
               value={formData.fullName}
               onChange={handleChange}
               placeholder="Enter your full name"
-              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 ${
+              className={`px-3 py-2 border rounded-md text-sm outline-none placeholder:text-gray-400 text-gray-900 ${
                 errors.fullName 
                   ? 'border-red-500 focus:border-red-500' 
                   : 'border-gray-300 focus:border-gray-900'
@@ -198,11 +240,14 @@ function Register({ onSwitchToLogin }: RegisterProps) {
             )}
           </div>
 
-          <div className="flex items-start gap-2 text-sm mt-2">
+
+          {/* // check box terms and conditions */}
+          <div className='flex flex-col mt-2'>
+          <div className="flex items-start gap-2 text-sm">
             <input 
               type="checkbox" 
               checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              onChange={handleCheckboxChange}
               className="w-4 h-4 mt-0.5 cursor-pointer accent-gray-900"
             />
             <label className="cursor-pointer text-gray-600 leading-tight">
@@ -211,6 +256,11 @@ function Register({ onSwitchToLogin }: RegisterProps) {
                 Terms & Conditions
               </a>
             </label>
+            </div>
+
+            {errors.terms && (
+              <span className="text-red-500 text-xs mt-1 ml-6">{errors.terms}</span>
+            )}
           </div>
 
           <button 

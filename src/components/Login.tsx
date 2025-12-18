@@ -1,14 +1,19 @@
 import { useState } from 'react';
+import type { Account } from '../types/User';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
+  onLoginSuccess: () => void;
 }
 
-function Login({ onSwitchToRegister }: LoginProps) {
+function Login({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  const [loginError, setLoginError] = useState('');
+
   const [errors, setErrors] = useState({
     email: '',
     password: '',
@@ -24,8 +29,10 @@ function Login({ onSwitchToRegister }: LoginProps) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
-      }));
+      }));  
     }
+    if (loginError) setLoginError('');
+  
   };
 
   const validateForm = () => {
@@ -61,10 +68,25 @@ function Login({ onSwitchToRegister }: LoginProps) {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log('Login data:', formData);
-      alert(`Login successful!\nEmail: ${formData.email}`);
-      // Reset form
-      setFormData({ email: '', password: '' });
+      const storedAccounts: Account[] = JSON.parse(localStorage.getItem('accounts') || '[]');
+  
+      const user = storedAccounts.find(
+        (acc: Account) => 
+          acc.email.toLowerCase() === formData.email.toLowerCase() && 
+          acc.password === formData.password
+      );
+
+      const isAdmin = formData.email.toLowerCase() === 'admin@test.com' && formData.password === '123456';
+
+      if (user || isAdmin) {
+        console.log('Login success');
+        setFormData({ email: '', password: '' });
+        setLoginError(''); // Clear any previous errors
+        onLoginSuccess();
+      } else {
+    
+        setLoginError('Invalid email or password');
+      }
     }
   };
 
@@ -75,6 +97,13 @@ function Login({ onSwitchToRegister }: LoginProps) {
           <h1 className="text-gray-900 text-2xl font-semibold mb-2">Welcome Back</h1>
           <p className="text-gray-500 text-sm">Login to your account</p>
         </div>
+
+  
+        {loginError && (
+          <div className="mb-4 p-3 bg-red-50 text-red-500 text-sm rounded-md border border-red-100">
+            {loginError}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
