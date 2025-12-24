@@ -1,32 +1,13 @@
-import { useState } from 'react'
 import Login from './components/Login'
 import Register from './components/Register'
 import UserManagement from './components/UserManagement'
-
-type Page = 'login' | 'register' | 'dashboard';
+import { useAuthStore } from './stores/authStore'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('login')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const handleLogin = () => {
-    setIsAuthenticated(true)
-    setCurrentPage('dashboard')
-  }
-
-  const handleRegisterSuccess = () => {
-    // After registering, go back to login page
-    setIsAuthenticated(false)
-    setCurrentPage('login')
-  }
-
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-    setCurrentPage('login')
-  }
+  const { currentPage, isAuthenticated, setCurrentPage, login, registerSuccess } = useAuthStore()
 
   if (isAuthenticated && currentPage === 'dashboard') {
-    return <UserManagement onLogout={handleLogout} />
+    return <UserManagement />
   }
 
   return (
@@ -34,12 +15,12 @@ function App() {
       {currentPage === 'login' ? (
         <Login 
           onSwitchToRegister={() => setCurrentPage('register')}
-          onLoginSuccess={handleLogin}
+          onLoginSuccess={login}
         />
       ) : (
         <Register 
           onSwitchToLogin={() => setCurrentPage('login')}
-          onRegisterSuccess={handleRegisterSuccess}
+          onRegisterSuccess={registerSuccess}
         />
       )}
     </>

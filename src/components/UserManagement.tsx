@@ -1,80 +1,31 @@
-import { useState, useEffect } from 'react';
-import { type User, type UserFormData } from '../types/User';
+import { useEffect } from 'react';
+import { type User } from '../types/User';
 import UserList from './UserList';
 import UserForm from './UserForm';
+import { useUserStore } from '../stores/userStore';
+import { useAuthStore } from '../stores/authStore';
 
-interface UserManagementProps {
-  onLogout: () => void;
-}
+function UserManagement() {
+  const {
+    users,
+    searchTerm,
+    editingUser,
+    showForm,
+    setSearchTerm,
+    setEditingUser,
+    setShowForm,
+    addUser,
+    updateUser,
+    deleteUser,
+    loadUsers,
+    getFilteredUsers,
+  } = useUserStore();
 
-function UserManagement({ onLogout }: UserManagementProps) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const { logout } = useAuthStore();
 
-  // Load users from localStorage on mount
   useEffect(() => {
-    const savedUsers = localStorage.getItem('users');
-    if (savedUsers) {
-      setTimeout(() => {
-        setUsers(JSON.parse(savedUsers));
-      }, 0);
-    } else {
-      // Add some sample data
-      const sampleUsers: User[] = [
-        {
-          id: '1',
-          fullName: 'John Doe',
-          email: 'john@example.com',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          fullName: 'Jane Smith',
-          email: 'jane@example.com',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      setTimeout(() => {
-        setUsers(sampleUsers);
-      }, 0);
-      localStorage.setItem('users', JSON.stringify(sampleUsers));
-    }
+    loadUsers();
   }, []);
-
-  // Save users to localStorage whenever they change
-  useEffect(() => {
-    if (users.length > 0) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-  }, [users]);
-
-  const handleAddUser = (data: UserFormData) => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      ...data,
-      createdAt: new Date().toISOString(),
-    };
-    setUsers([...users, newUser]);
-    setShowForm(false);
-  };
-
-  const handleUpdateUser = (data: UserFormData) => {
-    if (editingUser) {
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...data }
-          : user
-      ));
-      setEditingUser(null);
-      setShowForm(false);
-    }
-  };
-
-  const handleDeleteUser = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
-  };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -86,10 +37,7 @@ function UserManagement({ onLogout }: UserManagementProps) {
     setEditingUser(null);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = getFilteredUsers();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -102,7 +50,7 @@ function UserManagement({ onLogout }: UserManagementProps) {
               <p className="text-sm text-gray-500 mt-1">Manage your users </p>
             </div>
             <button
-              onClick={onLogout}
+              onClick={logout}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Logout
@@ -139,7 +87,7 @@ function UserManagement({ onLogout }: UserManagementProps) {
           <div className="mb-6">
             <UserForm
               user={editingUser}
-              onSubmit={editingUser ? handleUpdateUser : handleAddUser}
+              onSubmit={editingUser ? updateUser : addUser}
               onCancel={handleCancel}
             />
           </div>
@@ -155,7 +103,7 @@ function UserManagement({ onLogout }: UserManagementProps) {
         <UserList
           users={filteredUsers}
           onEdit={handleEdit}
-          onDelete={handleDeleteUser}
+          onDelete={deleteUser}
         />
       </div>
     </div>
